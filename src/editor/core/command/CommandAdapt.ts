@@ -64,6 +64,7 @@ import {
   IElementPosition,
   IElementStyle,
   IGetElementByIdOption,
+  IInsertElementListOption,
   IUpdateElementByIdOption
 } from '../../interface/Element'
 import {
@@ -1441,10 +1442,14 @@ export class CommandAdapt {
     const endElement = pickElementAttr(elementList[endIndex], {
       extraPickAttrs: ['id']
     })
-    // 页码信息
+    // 页码信息、行信息
     const positionList = this.position.getPositionList()
-    const startPageNo = positionList[startIndex].pageNo
-    const endPageNo = positionList[endIndex].pageNo
+    const startPosition = positionList[startIndex]
+    const endPosition = positionList[endIndex]
+    const startPageNo = startPosition.pageNo
+    const endPageNo = endPosition.pageNo
+    const startRowNo = startPosition.rowIndex
+    const endRowNo = endPosition.rowIndex
     // 坐标信息（相对编辑器书写区）
     const rangeRects: RangeRect[] = []
     const height = this.draw.getOriginalHeight()
@@ -1531,6 +1536,8 @@ export class CommandAdapt {
       endElement,
       startPageNo,
       endPageNo,
+      startRowNo,
+      endRowNo,
       rangeRects,
       zone,
       isTable,
@@ -1653,10 +1660,18 @@ export class CommandAdapt {
     })
   }
 
-  public insertElementList(payload: IElement[]) {
+  public insertElementList(
+    payload: IElement[],
+    options: IInsertElementListOption = {}
+  ) {
     if (!payload.length) return
     const isDisabled = this.draw.isReadonly() || this.draw.isDisabled()
     if (isDisabled) return
+    const { isReplace = true } = options
+    // 如果配置不替换时，需收缩选区至末尾
+    if (!isReplace) {
+      this.range.shrinkRange()
+    }
     const cloneElementList = deepClone(payload)
     // 格式化上下文信息
     const { startIndex } = this.range.getRange()

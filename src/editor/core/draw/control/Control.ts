@@ -628,8 +628,8 @@ export class Control {
   ): number | null {
     const elementList = context.elementList || this.getElementList()
     const startElement = elementList[startIndex]
-    // 设计模式不验证删除权限
-    if (!this.draw.isDesignMode()) {
+    // 设计模式 || 元素隐藏 => 不验证删除权限
+    if (!this.draw.isDesignMode() && !startElement?.control?.hide) {
       const { deletable = true } = startElement.control!
       if (!deletable) return null
     }
@@ -1176,7 +1176,8 @@ export class Control {
     for (const key in pageComponentData) {
       const pageComponentKey = <keyof IEditorData>key
       const elementList = zipElementList(pageComponentData[pageComponentKey]!, {
-        isClassifyArea: true
+        isClassifyArea: true,
+        extraPickAttrs: ['id']
       })
       pageComponentData[pageComponentKey] = elementList
       formatElementList(elementList, {
